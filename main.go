@@ -1,0 +1,45 @@
+package main
+
+import (
+	_ "hostflow/booking-service/docs" // Import generated swagger docs
+	"hostflow/booking-service/internal/bootstrap"
+
+	"github.com/joho/godotenv"
+	"go.uber.org/fx"
+)
+
+// @title Hostflow Booking Service API
+// @version 1.0
+// @description This is a comprehensive booking/reservation service API for managing property reservations with full CRUD operations, status management, and availability checking.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.example.com/support
+// @contact.email support@hostflow.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /
+// @schemes http https
+
+// @tag.name reservations
+// @tag.description Operations related to reservations
+
+// @tag.name customers
+// @tag.description Customer-specific reservation operations
+
+// @tag.name properties
+// @tag.description Property-specific reservation operations
+
+// @tag.name organizations
+// @tag.description Organization-specific reservation operations
+
+func main() {
+	_ = godotenv.Load()
+
+	fx.New(
+		bootstrap.Module,
+	).Run()
+}

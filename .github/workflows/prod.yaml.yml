@@ -1,0 +1,58 @@
+name: Prod Deploy
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build image
+        run: |
+          cd services/booking-service
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/booking-service:${{ github.ref_name }} .
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/booking-service:${{ github.ref_name }} \
+                     ${{ secrets.DOCKERHUB_USERNAME }}/booking-service:latest
+
+      - name: Push image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/booking-service:${{ github.ref_name }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/booking-service:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: prod
+
+    steps:
+
+      - name: Checkout Helm charts
+        uses: actions/checkout@v4
+        with:
+          repository: APSList/Hostflow
+          ref: main
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_PROD }}" | base64 --decode > $HOME/.kube/config
+
+      - name: Deploy to PROD
+        run: |
+          helm upgrade --install hostflow ./helm/charts/customer-service \
+            --namespace default \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/customers \
+            --set image.tag=${{ github.ref_name }} \
+            --set image.pullPolicy=IfNotPresent \

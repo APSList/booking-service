@@ -1,0 +1,26 @@
+.env
+*.env.local
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, hosted by native tools
+*.out
+coverage.txt
+
+# Dependency directories (only needed if you use 'go mod vendor')
+# vendor/
+
+# IDE specific files
+.vscode/
+.idea/
+
+# OS specific files
+.DS_Store

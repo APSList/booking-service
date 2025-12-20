@@ -1,0 +1,547 @@
+basePath: /
+definitions:
+  booking.ErrorResponse:
+    properties:
+      error:
+        example: Invalid request
+        type: string
+      message:
+        example: The provided data is invalid
+        type: string
+    type: object
+  booking.ReservationRequest:
+    properties:
+      additional_requests:
+        additionalProperties: true
+        type: object
+      check_in_date:
+        example: "2024-12-20T15:00:00Z"
+        type: string
+      check_out_date:
+        example: "2024-12-25T11:00:00Z"
+        type: string
+      customer_id:
+        example: 770e8400-e29b-41d4-a716-446655440000
+        type: string
+      guest_data:
+        additionalProperties: true
+        type: object
+      no_of_guests:
+        example: 2
+        minimum: 1
+        type: integer
+      organization_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      price_elements:
+        additionalProperties: true
+        type: object
+      property_id:
+        example: 660e8400-e29b-41d4-a716-446655440000
+        type: string
+      total_price:
+        example: 500
+        minimum: 0
+        type: number
+    required:
+    - check_in_date
+    - check_out_date
+    - customer_id
+    - no_of_guests
+    - organization_id
+    - property_id
+    - total_price
+    type: object
+  booking.ReservationResponse:
+    properties:
+      additional_requests:
+        additionalProperties: true
+        type: object
+      check_in_date:
+        example: "2024-12-20T15:00:00Z"
+        type: string
+      check_out_date:
+        example: "2024-12-25T11:00:00Z"
+        type: string
+      created_at:
+        example: "2024-12-01T09:00:00Z"
+        type: string
+      customer_id:
+        example: 770e8400-e29b-41d4-a716-446655440000
+        type: string
+      guest_data:
+        additionalProperties: true
+        type: object
+      id:
+        example: 880e8400-e29b-41d4-a716-446655440000
+        type: string
+      no_of_guests:
+        example: 2
+        type: integer
+      organization_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      price_elements:
+        additionalProperties: true
+        type: object
+      property_id:
+        example: 660e8400-e29b-41d4-a716-446655440000
+        type: string
+      status:
+        enum:
+        - pending
+        - confirmed
+        - checked_in
+        - checked_out
+        - cancelled
+        - completed
+        - rejected
+        example: confirmed
+        type: string
+      total_price:
+        example: 500
+        type: number
+      update_at:
+        example: "2024-12-01T09:00:00Z"
+        type: string
+    type: object
+  booking.StatusUpdateRequest:
+    properties:
+      status:
+        enum:
+        - pending
+        - confirmed
+        - checked_in
+        - checked_out
+        - cancelled
+        - completed
+        - rejected
+        example: confirmed
+        type: string
+    required:
+    - status
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@hostflow.com
+    name: API Support
+    url: http://www.example.com/support
+  description: This is a comprehensive booking/reservation service API for managing
+    property reservations with full CRUD operations, status management, and availability
+    checking.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Hostflow Booking Service API
+  version: "1.0"
+paths:
+  /customers/{customer_id}/reservations:
+    get:
+      consumes:
+      - application/json
+      description: Get all reservations for a specific customer
+      parameters:
+      - description: Customer ID (UUID)
+        in: path
+        name: customer_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/booking.ReservationResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Get reservations by customer
+      tags:
+      - reservations
+  /organizations/{organization_id}/reservations:
+    get:
+      consumes:
+      - application/json
+      description: Get all reservations for a specific organization
+      parameters:
+      - description: Organization ID (UUID)
+        in: path
+        name: organization_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/booking.ReservationResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Get reservations by organization
+      tags:
+      - reservations
+  /properties/{property_id}/reservations:
+    get:
+      consumes:
+      - application/json
+      description: Get all reservations for a specific property
+      parameters:
+      - description: Property ID (UUID)
+        in: path
+        name: property_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/booking.ReservationResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Get reservations by property
+      tags:
+      - reservations
+  /reservations:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of all reservations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/booking.ReservationResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Get all reservations
+      tags:
+      - reservations
+    post:
+      consumes:
+      - application/json
+      description: Create a new reservation with the provided details
+      parameters:
+      - description: Reservation details
+        in: body
+        name: reservation
+        required: true
+        schema:
+          $ref: '#/definitions/booking.ReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Create a new reservation
+      tags:
+      - reservations
+  /reservations/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete reservation by reservation ID
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Delete a reservation
+      tags:
+      - reservations
+    get:
+      consumes:
+      - application/json
+      description: Get reservation details by reservation ID
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Get reservation by ID
+      tags:
+      - reservations
+    put:
+      consumes:
+      - application/json
+      description: Update reservation details by reservation ID
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated reservation details
+        in: body
+        name: reservation
+        required: true
+        schema:
+          $ref: '#/definitions/booking.ReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Update a reservation
+      tags:
+      - reservations
+  /reservations/{id}/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel a reservation by ID
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Cancel a reservation
+      tags:
+      - reservations
+  /reservations/{id}/checkin:
+    post:
+      consumes:
+      - application/json
+      description: Mark a reservation as checked in
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Check-in a reservation
+      tags:
+      - reservations
+  /reservations/{id}/checkout:
+    post:
+      consumes:
+      - application/json
+      description: Mark a reservation as checked out
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Check-out a reservation
+      tags:
+      - reservations
+  /reservations/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirm a pending reservation by ID
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Confirm a reservation
+      tags:
+      - reservations
+  /reservations/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a reservation
+      parameters:
+      - description: Reservation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New status
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/booking.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/booking.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/booking.ErrorResponse'
+      summary: Update reservation status
+      tags:
+      - reservations
+schemes:
+- http
+- https
+swagger: "2.0"
+tags:
+- description: Operations related to reservations
+  name: reservations
+- description: Customer-specific reservation operations
+  name: customers
+- description: Property-specific reservation operations
+  name: properties
+- description: Organization-specific reservation operations
+  name: organizations
