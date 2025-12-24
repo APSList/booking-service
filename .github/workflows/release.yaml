@@ -1,9 +1,9 @@
-name: Dev CI/CD
+name: Release
 
 on:
   push:
-    branches:
-      - dev
+    tags:
+      - 'v*.*.*'
 
 jobs:
   test:
@@ -28,7 +28,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: test
-    environment: dev
+    environment: prod
 
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_TAG=${GITHUB_SHA::7}
+          IMAGE_TAG=${GITHUB_REF#refs/tags/}
           echo "Building image with tag $IMAGE_TAG"
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/customer-service:$IMAGE_TAG .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/customer-service:$IMAGE_TAG
@@ -68,8 +68,8 @@ jobs:
 
       - name: Deploy to DEV with Helm
         run: |
-          helm upgrade --install hostflow-dev ./charts/customer-service \
-            --namespace dev \
+          helm upgrade --install hostflow-prod ./charts/customer-service \
+            --namespace prod \
             --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/customer-service \
-            --set image.tag=${{ env.IMAGE_TAG }} \
+            --set image.tag=${GITHUB_REF#refs/tags/} \
             --set image.pullPolicy=Always
