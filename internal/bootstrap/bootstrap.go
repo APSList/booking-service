@@ -74,8 +74,17 @@ func registerHooks(
 				// Perform any necessary setup or initialization tasks for the routes
 				routes.Setup()
 
-				// Start the router by running it in a separate goroutine
-				go router.Run(fmt.Sprintf("%s:%s", os.Getenv("APP_HOST"), os.Getenv("APP_PORT")))
+				port := os.Getenv("APP_PORT")
+				if port == "" {
+					port = "8080"
+				}
+
+				addr := ":" + port
+
+				err := router.Run(addr)
+				if err != nil {
+					return err
+				}
 
 				return nil
 			},
