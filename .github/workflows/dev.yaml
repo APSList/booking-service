@@ -68,7 +68,7 @@ jobs:
       - name: Deploy to DEV with Helm
         run: |
           IMAGE_TAG=${GITHUB_SHA::7}
-          helm upgrade --install hostflow-dev ./helm/helm/charts/booking-service \
+          helm upgrade --install hostflow-dev-booking-service ./helm/helm/charts/booking-service \
             --namespace dev \
             --create-namespace \
             --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/booking-service \
