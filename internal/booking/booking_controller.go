@@ -47,6 +47,28 @@ func (c *ReservationController) GetReservationsHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (route ReservationRoutes) LivenessHandler(c *gin.Context) {
+	// If this handler runs, the process is alive
+	c.JSON(200, gin.H{
+		"status": "alive",
+	})
+}
+
+func (route ReservationRoutes) ReadinessHandler(c *gin.Context) {
+	// Put real readiness checks here if you have them
+	// e.g. database ping, message broker connection, etc.
+
+	// Example:
+	// if err := route.db.PingContext(c); err != nil {
+	//     c.JSON(503, gin.H{"status": "not ready"})
+	//     return
+	// }
+
+	c.JSON(200, gin.H{
+		"status": "ready",
+	})
+}
+
 // GetReservationByIDHandler godoc
 // @Summary Get reservation by ID
 // @Description Get reservation details by reservation ID

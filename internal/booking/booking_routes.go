@@ -41,6 +41,12 @@ func (route ReservationRoutes) Setup() {
 		reservations.DELETE("/:id", route.reservationController.DeleteReservationHandler)
 	}
 
+	health := route.router.Group("/health")
+	{
+		health.GET("/live", route.LivenessHandler)
+		health.GET("/ready", route.ReadinessHandler)
+	}
+
 	// Swagger documentation route
 	route.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
