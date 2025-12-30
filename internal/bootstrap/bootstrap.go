@@ -81,10 +81,12 @@ func registerHooks(
 
 				addr := ":" + port
 
-				err := router.Run(addr)
-				if err != nil {
-					return err
-				}
+				go func() {
+					logger.Info("Starting HTTP server on " + addr)
+					if err := router.Run(addr); err != nil {
+						logger.Fatal("Failed to start HTTP server", err)
+					}
+				}()
 
 				return nil
 			},
