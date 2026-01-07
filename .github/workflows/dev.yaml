@@ -75,3 +75,4 @@ jobs:
             --set image.tag=$IMAGE_TAG \
             --set image.pullPolicy=Always \
             --set actualSecrets.DATABASE_URL="${{ secrets.DB_URL }}" \
+            --set actualSecrets.KAFKA_PASSWORD="${{ secrets.KAFKA_PASSWORD }}"

@@ -3,6 +3,7 @@ package main
 import (
 	_ "hostflow/booking-service/docs" // Import generated swagger docs
 	"hostflow/booking-service/internal/bootstrap"
+	"hostflow/booking-service/internal/kafka"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/fx"
@@ -41,5 +42,6 @@ func main() {
 
 	fx.New(
 		bootstrap.Module,
+		kafka.Module,
 	).Run()
 }
