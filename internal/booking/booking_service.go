@@ -1,10 +1,14 @@
 package booking
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"math/rand/v2"
+	"net/http"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // ReservationService handles business logic for reservations
@@ -29,7 +33,7 @@ func (s *ReservationService) GetReservations() ([]Reservation, error) {
 }
 
 // GetReservationByID returns a reservation by ID
-func (s *ReservationService) GetReservationByID(id uuid.UUID) (*Reservation, error) {
+func (s *ReservationService) GetReservationByID(id int) (*Reservation, error) {
 	reservation, err := s.repo.GetReservationByID(id)
 	if err != nil {
 		return nil, err
@@ -44,10 +48,10 @@ func (s *ReservationService) GetReservationByID(id uuid.UUID) (*Reservation, err
 
 // CreateReservation creates a new reservation
 func (s *ReservationService) CreateReservation(req *ReservationRequest) (*Reservation, error) {
-	// Validate request
-	if err := s.validateReservationRequest(req); err != nil {
-		return nil, err
-	}
+	/*	// Validate request
+		if err := s.validateReservationRequest(req); err != nil {
+			return nil, err
+		}*/
 
 	// Check property availability
 	hasConflict, err := s.repo.CheckPropertyAvailability(req.PropertyID, req.CheckInDate, req.CheckOutDate)
@@ -60,13 +64,13 @@ func (s *ReservationService) CreateReservation(req *ReservationRequest) (*Reserv
 
 	// Create reservation entity
 	reservation := &Reservation{
-		ID:                 uuid.New(),
+		ID:                 rand.IntN(1000000),
 		OrganizationID:     req.OrganizationID,
 		PropertyID:         req.PropertyID,
 		CustomerID:         req.CustomerID,
 		CheckInDate:        req.CheckInDate,
 		CheckOutDate:       req.CheckOutDate,
-		Status:             "pending",
+		Status:             "CREATED",
 		TotalPrice:         req.TotalPrice,
 		PriceElements:      req.PriceElements,
 		NoOfGuests:         req.NoOfGuests,
@@ -93,15 +97,31 @@ func (s *ReservationService) CreateReservation(req *ReservationRequest) (*Reserv
 		return nil, err
 	}
 
-	return createdReservation, nil
+	// 5. Call Payment Service
+	paymentUrl, err := s.initiatePayment(createdReservation)
+	if err != nil {
+		// Log error, but you might want to handle failures (e.g., mark as FAILED)
+		return nil, fmt.Errorf("failed to initiate payment: %w", err)
+	}
+
+	createdReservation.PaymentURL = paymentUrl
+	createdReservation.Status = "PAYMENT_REQUIRED"
+	createdReservation.UpdatedAt = time.Now()
+
+	updatedReservation, err := s.repo.UpdateReservation(createdReservation)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedReservation, nil
 }
 
 // UpdateReservation updates an existing reservation
-func (s *ReservationService) UpdateReservation(id uuid.UUID, req *ReservationRequest) (*Reservation, error) {
+func (s *ReservationService) UpdateReservation(id int, req *ReservationRequest) (*Reservation, error) {
 	// Validate request
-	if err := s.validateReservationRequest(req); err != nil {
+	/*	if err := s.validateReservationRequest(req); err != nil {
 		return nil, err
-	}
+	}*/
 
 	// Check if reservation exists
 	existingReservation, err := s.repo.GetReservationByID(id)
@@ -159,8 +179,40 @@ func (s *ReservationService) UpdateReservation(id uuid.UUID, req *ReservationReq
 	return updatedReservation, nil
 }
 
+func (s *ReservationService) initiatePayment(res *Reservation) (string, error) {
+	paymentReq := map[string]interface{}{
+		"organizationId": res.OrganizationID,
+		"reservationId":  res.ID,
+		"customerId":     res.CustomerID,
+		"amount":         res.TotalPrice,
+	}
+
+	body, err := json.Marshal(paymentReq)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := http.Post("https://hostflow.software/payment/payments", "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("payment service returned status: %d", resp.StatusCode)
+	}
+
+	// Read the string response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(respBody), nil
+}
+
 // DeleteReservation deletes a reservation by ID
-func (s *ReservationService) DeleteReservation(id uuid.UUID) error {
+func (s *ReservationService) DeleteReservation(id int) error {
 	// Check if reservation exists
 	reservation, err := s.repo.GetReservationByID(id)
 	if err != nil {
@@ -185,7 +237,7 @@ func (s *ReservationService) DeleteReservation(id uuid.UUID) error {
 }
 
 // UpdateReservationStatus updates only the status of a reservation
-func (s *ReservationService) UpdateReservationStatus(id uuid.UUID, status string) (*Reservation, error) {
+func (s *ReservationService) UpdateReservationStatus(id int, status string) (*Reservation, error) {
 	// Validate status
 	validStatuses := map[string]bool{
 		"pending": true, "confirmed": true, "checked_in": true,
@@ -222,27 +274,27 @@ func (s *ReservationService) UpdateReservationStatus(id uuid.UUID, status string
 }
 
 // CancelReservation cancels a reservation
-func (s *ReservationService) CancelReservation(id uuid.UUID) (*Reservation, error) {
+func (s *ReservationService) CancelReservation(id int) (*Reservation, error) {
 	return s.UpdateReservationStatus(id, "cancelled")
 }
 
 // ConfirmReservation confirms a pending reservation
-func (s *ReservationService) ConfirmReservation(id uuid.UUID) (*Reservation, error) {
+func (s *ReservationService) ConfirmReservation(id int) (*Reservation, error) {
 	return s.UpdateReservationStatus(id, "confirmed")
 }
 
 // CheckInReservation marks a reservation as checked in
-func (s *ReservationService) CheckInReservation(id uuid.UUID) (*Reservation, error) {
+func (s *ReservationService) CheckInReservation(id int) (*Reservation, error) {
 	return s.UpdateReservationStatus(id, "checked_in")
 }
 
 // CheckOutReservation marks a reservation as checked out
-func (s *ReservationService) CheckOutReservation(id uuid.UUID) (*Reservation, error) {
+func (s *ReservationService) CheckOutReservation(id int) (*Reservation, error) {
 	return s.UpdateReservationStatus(id, "checked_out")
 }
 
 // GetReservationsByCustomer returns all reservations for a customer
-func (s *ReservationService) GetReservationsByCustomer(customerID uuid.UUID) ([]Reservation, error) {
+func (s *ReservationService) GetReservationsByCustomer(customerID int) ([]Reservation, error) {
 	reservations, err := s.repo.GetReservationsByCustomer(customerID)
 	if err != nil {
 		return nil, err
@@ -251,7 +303,7 @@ func (s *ReservationService) GetReservationsByCustomer(customerID uuid.UUID) ([]
 }
 
 // GetReservationsByProperty returns all reservations for a property
-func (s *ReservationService) GetReservationsByProperty(propertyID uuid.UUID) ([]Reservation, error) {
+func (s *ReservationService) GetReservationsByProperty(propertyID int) ([]Reservation, error) {
 	reservations, err := s.repo.GetReservationsByProperty(propertyID)
 	if err != nil {
 		return nil, err
@@ -260,7 +312,7 @@ func (s *ReservationService) GetReservationsByProperty(propertyID uuid.UUID) ([]
 }
 
 // GetReservationsByOrganization returns all reservations for an organization
-func (s *ReservationService) GetReservationsByOrganization(organizationID uuid.UUID) ([]Reservation, error) {
+func (s *ReservationService) GetReservationsByOrganization(organizationID int) ([]Reservation, error) {
 	reservations, err := s.repo.GetReservationsByOrganization(organizationID)
 	if err != nil {
 		return nil, err
@@ -268,16 +320,13 @@ func (s *ReservationService) GetReservationsByOrganization(organizationID uuid.U
 	return reservations, nil
 }
 
-// validateReservationRequest validates the reservation request
+/*// validateReservationRequest validates the reservation request
 func (s *ReservationService) validateReservationRequest(req *ReservationRequest) error {
 	if req.OrganizationID == uuid.Nil {
 		return errors.New("organization ID is required")
 	}
 	if req.PropertyID == uuid.Nil {
 		return errors.New("property ID is required")
-	}
-	if req.CustomerID == uuid.Nil {
-		return errors.New("customer ID is required")
 	}
 	if req.CheckInDate.IsZero() {
 		return errors.New("check-in date is required")
@@ -305,7 +354,7 @@ func (s *ReservationService) validateReservationRequest(req *ReservationRequest)
 	}
 
 	return nil
-}
+}*/
 
 // validateStatusTransition validates if a status transition is allowed
 func (s *ReservationService) validateStatusTransition(currentStatus, newStatus string) error {

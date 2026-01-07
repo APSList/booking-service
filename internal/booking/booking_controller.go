@@ -3,8 +3,9 @@ package booking
 import (
 	"net/http"
 
+	"strconv"
+
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // ReservationController handles HTTP requests for reservations
@@ -84,7 +85,7 @@ func (route ReservationRoutes) ReadinessHandler(c *gin.Context) {
 func (c *ReservationController) GetReservationByIDHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",
@@ -154,7 +155,7 @@ func (c *ReservationController) CreateReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) UpdateReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",
@@ -199,7 +200,7 @@ func (c *ReservationController) UpdateReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) DeleteReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",
@@ -235,7 +236,7 @@ func (c *ReservationController) DeleteReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) UpdateReservationStatusHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",
@@ -279,7 +280,7 @@ func (c *ReservationController) UpdateReservationStatusHandler(ctx *gin.Context)
 func (c *ReservationController) CancelReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",
@@ -314,7 +315,7 @@ func (c *ReservationController) CancelReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) ConfirmReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",
@@ -349,7 +350,7 @@ func (c *ReservationController) ConfirmReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) CheckInReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",
@@ -384,7 +385,7 @@ func (c *ReservationController) CheckInReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) CheckOutReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	id, err := uuid.Parse(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid ID format",

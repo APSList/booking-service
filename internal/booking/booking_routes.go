@@ -35,7 +35,7 @@ func (route ReservationRoutes) Setup() {
 	reservations := route.router.Group("/reservations")
 	{
 		reservations.GET("", route.reservationController.GetReservationsHandler)
-		reservations.POST("", route.reservationController.CreateReservationHandler)
+		reservations.POST("/", route.reservationController.CreateReservationHandler)
 		reservations.GET("/:id", route.reservationController.GetReservationByIDHandler)
 		reservations.PUT("/:id", route.reservationController.UpdateReservationHandler)
 		reservations.DELETE("/:id", route.reservationController.DeleteReservationHandler)

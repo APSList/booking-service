@@ -3,9 +3,9 @@ package booking
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -45,7 +45,7 @@ func (r *ReservationRepository) GetReservations() ([]Reservation, error) {
 }
 
 // GetReservationByID returns a single reservation by ID
-func (r *ReservationRepository) GetReservationByID(id uuid.UUID) (*Reservation, error) {
+func (r *ReservationRepository) GetReservationByID(id int) (*Reservation, error) {
 	query := `
         SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
                total_price, price_elements, no_of_guests, guest_data, additional_requests, 
@@ -71,52 +71,63 @@ func (r *ReservationRepository) GetReservationByID(id uuid.UUID) (*Reservation, 
 	return &reservation, nil
 }
 
-// CreateReservation creates a new reservation
 func (r *ReservationRepository) CreateReservation(reservation *Reservation) (*Reservation, error) {
 	query := `
         INSERT INTO reservation (
-            id, organization_id, property_id, customer_id, check_in_date, status, 
-            total_price, price_elements, no_of_guests, guest_data, additional_requests, 
-            check_out_date, created_at, update_at
+            id, organization_id, property_id, customer_id, check_in_date, check_out_date,
+            status, total_price, payment_url, price_elements, no_of_guests, 
+            guest_data, additional_requests, created_at, update_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        RETURNING id, organization_id, property_id, customer_id, check_in_date, status, 
-                  total_price, price_elements, no_of_guests, guest_data, additional_requests, 
-                  check_out_date, created_at, update_at
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        RETURNING id, organization_id, property_id, customer_id, check_in_date, check_out_date,
+                  status, total_price, payment_url, price_elements, no_of_guests, 
+                  guest_data, additional_requests, created_at, update_at
     `
 
-	rows, err := r.db.Query(
-		context.Background(),
-		query,
+	// Create a new instance to scan into
+	res := &Reservation{}
+
+	err := r.db.QueryRow(context.Background(), query,
 		reservation.ID,
 		reservation.OrganizationID,
 		reservation.PropertyID,
 		reservation.CustomerID,
 		reservation.CheckInDate,
+		reservation.CheckOutDate,
 		reservation.Status,
 		reservation.TotalPrice,
+		reservation.PaymentURL, // $9
 		reservation.PriceElements,
 		reservation.NoOfGuests,
 		reservation.GuestData,
 		reservation.AdditionalRequests,
-		reservation.CheckOutDate,
 		reservation.CreatedAt,
-		reservation.UpdatedAt,
+		reservation.UpdatedAt, // $15
+	).Scan(
+		&res.ID,
+		&res.OrganizationID,
+		&res.PropertyID,
+		&res.CustomerID,
+		&res.CheckInDate,
+		&res.CheckOutDate,
+		&res.Status,
+		&res.TotalPrice,
+		&res.PaymentURL,
+		&res.PriceElements,
+		&res.NoOfGuests,
+		&res.GuestData,
+		&res.AdditionalRequests,
+		&res.CreatedAt,
+		&res.UpdatedAt,
 	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
 
-	created, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Reservation])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to insert reservation: %w", err)
 	}
 
-	return &created, nil
+	return res, nil
 }
 
-// UpdateReservation updates an existing reservation
 func (r *ReservationRepository) UpdateReservation(reservation *Reservation) (*Reservation, error) {
 	query := `
         UPDATE reservation
@@ -126,40 +137,43 @@ func (r *ReservationRepository) UpdateReservation(reservation *Reservation) (*Re
             check_in_date = $5,
             status = $6,
             total_price = $7,
-            price_elements = $8,
-            no_of_guests = $9,
-            guest_data = $10,
-            additional_requests = $11,
-            check_out_date = $12,
-            update_at = $13
+            payment_url = $8,          -- Added this
+            price_elements = $9,
+            no_of_guests = $10,
+            guest_data = $11,
+            additional_requests = $12,
+            check_out_date = $13,
+            update_at = $14           -- Changed update_at to updated_at
         WHERE id = $1
-        RETURNING id, organization_id, property_id, customer_id, check_in_date, status, 
-                  total_price, price_elements, no_of_guests, guest_data, additional_requests, 
-                  check_out_date, created_at, update_at
+        RETURNING id, organization_id, property_id, customer_id, check_in_date, 
+                  check_out_date, status, total_price, payment_url, price_elements, 
+                  no_of_guests, guest_data, additional_requests, created_at, update_at
     `
 
 	rows, err := r.db.Query(
 		context.Background(),
 		query,
-		reservation.ID,
-		reservation.OrganizationID,
-		reservation.PropertyID,
-		reservation.CustomerID,
-		reservation.CheckInDate,
-		reservation.Status,
-		reservation.TotalPrice,
-		reservation.PriceElements,
-		reservation.NoOfGuests,
-		reservation.GuestData,
-		reservation.AdditionalRequests,
-		reservation.CheckOutDate,
-		reservation.UpdatedAt,
+		reservation.ID,                 // $1
+		reservation.OrganizationID,     // $2
+		reservation.PropertyID,         // $3
+		reservation.CustomerID,         // $4
+		reservation.CheckInDate,        // $5
+		reservation.Status,             // $6
+		reservation.TotalPrice,         // $7
+		reservation.PaymentURL,         // $8 - New
+		reservation.PriceElements,      // $9
+		reservation.NoOfGuests,         // $10
+		reservation.GuestData,          // $11
+		reservation.AdditionalRequests, // $12
+		reservation.CheckOutDate,       // $13
+		reservation.UpdatedAt,          // $14
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	// RowToStructByName matches struct tags (db:"payment_url") to SQL column names
 	updated, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Reservation])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -172,7 +186,7 @@ func (r *ReservationRepository) UpdateReservation(reservation *Reservation) (*Re
 }
 
 // DeleteReservation deletes a reservation by ID
-func (r *ReservationRepository) DeleteReservation(id uuid.UUID) error {
+func (r *ReservationRepository) DeleteReservation(id int) error {
 	query := `DELETE FROM reservation WHERE id = $1`
 
 	result, err := r.db.Exec(context.Background(), query, id)
@@ -188,7 +202,7 @@ func (r *ReservationRepository) DeleteReservation(id uuid.UUID) error {
 }
 
 // CheckPropertyAvailability checks if a property is available for the given dates
-func (r *ReservationRepository) CheckPropertyAvailability(propertyID uuid.UUID, checkIn, checkOut time.Time) (bool, error) {
+func (r *ReservationRepository) CheckPropertyAvailability(propertyID int, checkIn, checkOut time.Time) (bool, error) {
 	query := `
         SELECT EXISTS(
             SELECT 1
@@ -213,7 +227,7 @@ func (r *ReservationRepository) CheckPropertyAvailability(propertyID uuid.UUID, 
 }
 
 // CheckPropertyAvailabilityExcluding checks availability excluding a specific reservation
-func (r *ReservationRepository) CheckPropertyAvailabilityExcluding(excludeID, propertyID uuid.UUID, checkIn, checkOut time.Time) (bool, error) {
+func (r *ReservationRepository) CheckPropertyAvailabilityExcluding(excludeID int, propertyID int, checkIn, checkOut time.Time) (bool, error) {
 	query := `
         SELECT EXISTS(
             SELECT 1
@@ -239,7 +253,7 @@ func (r *ReservationRepository) CheckPropertyAvailabilityExcluding(excludeID, pr
 }
 
 // GetReservationsByCustomer returns all reservations for a customer
-func (r *ReservationRepository) GetReservationsByCustomer(customerID uuid.UUID) ([]Reservation, error) {
+func (r *ReservationRepository) GetReservationsByCustomer(customerID int) ([]Reservation, error) {
 	query := `
         SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
                total_price, price_elements, no_of_guests, guest_data, additional_requests, 
@@ -264,7 +278,7 @@ func (r *ReservationRepository) GetReservationsByCustomer(customerID uuid.UUID) 
 }
 
 // GetReservationsByProperty returns all reservations for a property
-func (r *ReservationRepository) GetReservationsByProperty(propertyID uuid.UUID) ([]Reservation, error) {
+func (r *ReservationRepository) GetReservationsByProperty(propertyID int) ([]Reservation, error) {
 	query := `
         SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
                total_price, price_elements, no_of_guests, guest_data, additional_requests, 
@@ -289,7 +303,7 @@ func (r *ReservationRepository) GetReservationsByProperty(propertyID uuid.UUID) 
 }
 
 // GetReservationsByOrganization returns all reservations for an organization
-func (r *ReservationRepository) GetReservationsByOrganization(organizationID uuid.UUID) ([]Reservation, error) {
+func (r *ReservationRepository) GetReservationsByOrganization(organizationID int) ([]Reservation, error) {
 	query := `
         SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
                total_price, price_elements, no_of_guests, guest_data, additional_requests, 
