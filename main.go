@@ -3,6 +3,7 @@ package main
 import (
 	_ "hostflow/booking-service/docs" // Import generated swagger docs
 	"hostflow/booking-service/internal/bootstrap"
+	"hostflow/booking-service/internal/customer"
 	"hostflow/booking-service/internal/kafka"
 
 	"github.com/joho/godotenv"
@@ -21,7 +22,7 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
+// @host hostflow.software
 // @BasePath /
 // @schemes http https
 
@@ -43,5 +44,6 @@ func main() {
 	fx.New(
 		bootstrap.Module,
 		kafka.Module,
+		customer.Module,
 	).Run()
 }

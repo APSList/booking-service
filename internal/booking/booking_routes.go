@@ -1,6 +1,7 @@
 package booking
 
 import (
+	"hostflow/booking-service/internal/customer"
 	"hostflow/booking-service/pkg/lib"
 
 	swaggerFiles "github.com/swaggo/files"
@@ -12,6 +13,7 @@ type ReservationRoutes struct {
 	logger                lib.Logger
 	router                *lib.Router
 	reservationController *ReservationController
+	customerController    *customer.CustomerController
 }
 
 // SetReservationRoutes returns a ReservationRoutes struct
@@ -19,11 +21,13 @@ func SetReservationRoutes(
 	logger lib.Logger,
 	router *lib.Router,
 	reservationController *ReservationController,
+	customerController *customer.CustomerController,
 ) ReservationRoutes {
 	return ReservationRoutes{
 		logger:                logger,
 		router:                router,
 		reservationController: reservationController,
+		customerController:    customerController,
 	}
 }
 
@@ -39,6 +43,15 @@ func (route ReservationRoutes) Setup() {
 		reservations.GET("/:id", route.reservationController.GetReservationByIDHandler)
 		reservations.PUT("/:id", route.reservationController.UpdateReservationHandler)
 		reservations.DELETE("/:id", route.reservationController.DeleteReservationHandler)
+	}
+
+	customers := route.router.Group("/customer")
+	{
+		customers.GET("", route.customerController.GetCustomerHandler)
+		customers.POST("/", route.customerController.CreateCustomerHandler)
+		customers.GET("/:id", route.customerController.GetCustomerByIDHandler)
+		customers.PUT("/:id", route.customerController.UpdateCustomerHandler)
+		customers.DELETE("/:id", route.customerController.DeleteCustomerHandler)
 	}
 
 	health := route.router.Group("/health")

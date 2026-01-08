@@ -24,7 +24,7 @@ func GetReservationRepository(db *pgxpool.Pool) *ReservationRepository {
 func (r *ReservationRepository) GetReservations() ([]Reservation, error) {
 	query := `
         SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
-               total_price, price_elements, no_of_guests, guest_data, additional_requests, 
+               total_price, payment_url, price_elements, no_of_guests, guest_data, additional_requests, 
                check_out_date, created_at, update_at
         FROM reservation
         ORDER BY created_at DESC
