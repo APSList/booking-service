@@ -2,45 +2,48 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"hostflow/booking-service/internal/booking"
 	"os"
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	"github.com/segmentio/kafka-go/sasl/scram"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	"go.uber.org/fx"
 )
 
-func NewKafkaReader() (*kafka.Reader, error) {
-	// 1. Setup SCRAM-SHA-256 Mechanism
-	mechanism, err := scram.Mechanism(scram.SHA256,
-		os.Getenv("KAFKA_USER"),
-		os.Getenv("KAFKA_PASSWORD"),
-	)
-	if err != nil {
-		return nil, err
+func NewKafkaReader() *kafka.Reader {
+	mechanism := plain.Mechanism{
+		Username: os.Getenv("KAFKA_USER"),
+		Password: os.Getenv("KAFKA_PASSWORD"),
 	}
 
-	dialer := &kafka.Dialer{
-		Timeout:       10 * time.Second,
-		DualStack:     true,
-		SASLMechanism: mechanism,
-	}
+	//sharedTransport := &kafka.Transport{
+	//	SASL: mechanism,
+	//	TLS:  &tls.Config{}, // This enables the "SSL" part of SASL_SSL
+	//}
 
 	return kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{os.Getenv("KAFKA_BROKERS")},
-		Topic:   "booking.payments",
+		Topic:   os.Getenv("KAFKA_TOPIC"),
 		GroupID: "communication-service-group",
-		Dialer:  dialer,
-	}), nil
+		Dialer: &kafka.Dialer{
+			Timeout:       10 * time.Second,
+			DualStack:     true,
+			SASLMechanism: mechanism,
+			TLS:           &tls.Config{},
+		},
+		// Replicating Confluent's session timeout behavior
+		ReadBatchTimeout: 10 * time.Second,
+	})
 }
 
-func RegisterKafkaHooks(lifecycle fx.Lifecycle, reader *kafka.Reader) {
+func RegisterKafkaHooks(lifecycle fx.Lifecycle, reader *kafka.Reader, reservationService *booking.ReservationService) {
 	lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			fmt.Println("Kafka Consumer starting on topic: booking.payments")
-
+			fmt.Println("Kafka Consumer starting...")
 			go func() {
 				for {
 					m, err := reader.ReadMessage(context.Background())
@@ -49,24 +52,27 @@ func RegisterKafkaHooks(lifecycle fx.Lifecycle, reader *kafka.Reader) {
 						return
 					}
 
+					fmt.Printf("Received message: %s\n", string(m.Value))
 					var envelope MessageEnvelope
 					if err := json.Unmarshal(m.Value, &envelope); err != nil {
 						fmt.Printf("Failed to parse message: %v\n", err)
 						continue
 					}
 
-					// Logic check: Only process if it's a PaymentAction and succeeded
+					// Only process if it's a PaymentAction and succeeded
 					if envelope.MessageType == "PaymentAction" && envelope.Payload.StripeStatus == "succeeded" {
-						fmt.Printf("Payment Succeeded for Reservation: %d\n", envelope.Payload.ReservationId)
+						fmt.Printf("Processing successful payment for Reservation: %d\n", envelope.Payload.ReservationId)
 
-						// TODO dodaj klic v booking service
+						err := reservationService.ConfirmPayment(int(envelope.Payload.ReservationId))
+						if err != nil {
+							fmt.Printf("Failed to confirm payment for Reservation: %d; err: %s\n", envelope.Payload.ReservationId, err)
+						}
 					}
 				}
 			}()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			fmt.Println("Kafka Consumer shutting down...")
 			return reader.Close()
 		},
 	})

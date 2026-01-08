@@ -116,6 +116,24 @@ func (s *ReservationService) CreateReservation(req *ReservationRequest) (*Reserv
 	return updatedReservation, nil
 }
 
+func (s *ReservationService) ConfirmPayment(reservationID int) error {
+	existing, err := s.repo.GetReservationByID(reservationID)
+	if err != nil {
+		return fmt.Errorf("could not find reservation %d to confirm: %w", reservationID, err)
+	}
+
+	existing.Status = "CONFIMED"
+	existing.UpdatedAt = time.Now()
+
+	_, err = s.repo.UpdateReservation(existing)
+	if err != nil {
+		return fmt.Errorf("failed to update status for reservation %d: %w", reservationID, err)
+	}
+
+	fmt.Printf("Reservation %d status set to 'CONFIMED'\n", reservationID)
+	return nil
+}
+
 // UpdateReservation updates an existing reservation
 func (s *ReservationService) UpdateReservation(id int, req *ReservationRequest) (*Reservation, error) {
 	// Validate request
