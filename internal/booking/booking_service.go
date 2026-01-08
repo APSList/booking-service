@@ -122,7 +122,7 @@ func (s *ReservationService) ConfirmPayment(reservationID int) error {
 		return fmt.Errorf("could not find reservation %d to confirm: %w", reservationID, err)
 	}
 
-	existing.Status = "CONFIMED"
+	existing.Status = "CONFIRMED"
 	existing.UpdatedAt = time.Now()
 
 	_, err = s.repo.UpdateReservation(existing)
