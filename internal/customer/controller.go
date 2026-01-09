@@ -106,18 +106,29 @@ func (c *CustomerController) GetCustomerByIDHandler(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := c.client.GetCustomer(ctx, &pb.GetCustomerRequest{Id: id})
+	limitStr := ctx.Query("limit")
+	offsetStr := ctx.Query("offset")
+
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+
+	resp, err := c.client.ListCustomers(ctx, &pb.ListCustomersRequest{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
-	if resp.Customer.OrganizationId != orgID {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this customer"})
-		return
+	for _, cust := range resp.Customers {
+		if cust.OrganizationId == orgID && cust.Id == id {
+			ctx.JSON(http.StatusOK, cust)
+			return
+		}
 	}
 
-	ctx.JSON(http.StatusOK, resp.Customer)
+	ctx.JSON(http.StatusNotFound, gin.H{"error": "customer not found or access denied"})
 }
 
 /*// UpdateCustomerHandler updates a customer (assuming you implement Update RPC)
