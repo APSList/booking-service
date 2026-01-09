@@ -58,7 +58,7 @@ func (c *CustomerController) GetCustomerHandler(ctx *gin.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, resp.Customers)
+	ctx.JSON(http.StatusOK, filteredCustomers)
 }
 
 // CreateCustomerHandler calls CreateCustomer RPC
