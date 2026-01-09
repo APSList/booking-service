@@ -24,8 +24,8 @@ func GetReservationService(repo *ReservationRepository) *ReservationService {
 }
 
 // GetReservations returns all reservations
-func (s *ReservationService) GetReservations() ([]Reservation, error) {
-	reservations, err := s.repo.GetReservations()
+func (s *ReservationService) GetReservations(organizationID int64) ([]Reservation, error) {
+	reservations, err := s.repo.GetReservations(organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +33,8 @@ func (s *ReservationService) GetReservations() ([]Reservation, error) {
 }
 
 // GetReservationByID returns a reservation by ID
-func (s *ReservationService) GetReservationByID(id int) (*Reservation, error) {
-	reservation, err := s.repo.GetReservationByID(id)
+func (s *ReservationService) GetReservationByID(id int, organizationID int64) (*Reservation, error) {
+	reservation, err := s.repo.GetReservationByID(id, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (s *ReservationService) GetReservationByID(id int) (*Reservation, error) {
 }
 
 // CreateReservation creates a new reservation
-func (s *ReservationService) CreateReservation(req *ReservationRequest) (*Reservation, error) {
+func (s *ReservationService) CreateReservation(req *ReservationRequest, organizationID int64) (*Reservation, error) {
 	/*	// Validate request
 		if err := s.validateReservationRequest(req); err != nil {
 			return nil, err
@@ -65,7 +65,7 @@ func (s *ReservationService) CreateReservation(req *ReservationRequest) (*Reserv
 	// Create reservation entity
 	reservation := &Reservation{
 		ID:                 rand.IntN(1000000),
-		OrganizationID:     req.OrganizationID,
+		OrganizationID:     int(organizationID),
 		PropertyID:         req.PropertyID,
 		CustomerID:         req.CustomerID,
 		CheckInDate:        req.CheckInDate,
@@ -117,7 +117,7 @@ func (s *ReservationService) CreateReservation(req *ReservationRequest) (*Reserv
 }
 
 func (s *ReservationService) ConfirmPayment(reservationID int) error {
-	existing, err := s.repo.GetReservationByID(reservationID)
+	existing, err := s.repo.GetReservationByIDInternal(reservationID)
 	if err != nil {
 		return fmt.Errorf("could not find reservation %d to confirm: %w", reservationID, err)
 	}
@@ -135,14 +135,14 @@ func (s *ReservationService) ConfirmPayment(reservationID int) error {
 }
 
 // UpdateReservation updates an existing reservation
-func (s *ReservationService) UpdateReservation(id int, req *ReservationRequest) (*Reservation, error) {
+func (s *ReservationService) UpdateReservation(id int, req *ReservationRequest, organizationID int64) (*Reservation, error) {
 	// Validate request
 	/*	if err := s.validateReservationRequest(req); err != nil {
 		return nil, err
 	}*/
 
 	// Check if reservation exists
-	existingReservation, err := s.repo.GetReservationByID(id)
+	existingReservation, err := s.repo.GetReservationByID(id, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -230,9 +230,9 @@ func (s *ReservationService) initiatePayment(res *Reservation) (string, error) {
 }
 
 // DeleteReservation deletes a reservation by ID
-func (s *ReservationService) DeleteReservation(id int) error {
+func (s *ReservationService) DeleteReservation(id int, organizationID int64) error {
 	// Check if reservation exists
-	reservation, err := s.repo.GetReservationByID(id)
+	reservation, err := s.repo.GetReservationByID(id, organizationID)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func (s *ReservationService) DeleteReservation(id int) error {
 }
 
 // UpdateReservationStatus updates only the status of a reservation
-func (s *ReservationService) UpdateReservationStatus(id int, status string) (*Reservation, error) {
+func (s *ReservationService) UpdateReservationStatus(id int, status string, organizationID int64) (*Reservation, error) {
 	// Validate status
 	validStatuses := map[string]bool{
 		"pending": true, "confirmed": true, "checked_in": true,
@@ -266,7 +266,7 @@ func (s *ReservationService) UpdateReservationStatus(id int, status string) (*Re
 	}
 
 	// Get existing reservation
-	reservation, err := s.repo.GetReservationByID(id)
+	reservation, err := s.repo.GetReservationByID(id, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -292,23 +292,23 @@ func (s *ReservationService) UpdateReservationStatus(id int, status string) (*Re
 }
 
 // CancelReservation cancels a reservation
-func (s *ReservationService) CancelReservation(id int) (*Reservation, error) {
-	return s.UpdateReservationStatus(id, "cancelled")
+func (s *ReservationService) CancelReservation(id int, organizationID int64) (*Reservation, error) {
+	return s.UpdateReservationStatus(id, "CANCELLED", organizationID)
 }
 
 // ConfirmReservation confirms a pending reservation
-func (s *ReservationService) ConfirmReservation(id int) (*Reservation, error) {
-	return s.UpdateReservationStatus(id, "confirmed")
+func (s *ReservationService) ConfirmReservation(id int, organizationID int64) (*Reservation, error) {
+	return s.UpdateReservationStatus(id, "CONFIRMED", organizationID)
 }
 
 // CheckInReservation marks a reservation as checked in
-func (s *ReservationService) CheckInReservation(id int) (*Reservation, error) {
-	return s.UpdateReservationStatus(id, "checked_in")
+func (s *ReservationService) CheckInReservation(id int, organizationID int64) (*Reservation, error) {
+	return s.UpdateReservationStatus(id, "checked_in", organizationID)
 }
 
 // CheckOutReservation marks a reservation as checked out
-func (s *ReservationService) CheckOutReservation(id int) (*Reservation, error) {
-	return s.UpdateReservationStatus(id, "checked_out")
+func (s *ReservationService) CheckOutReservation(id int, organizationID int64) (*Reservation, error) {
+	return s.UpdateReservationStatus(id, "checked_out", organizationID)
 }
 
 // GetReservationsByCustomer returns all reservations for a customer

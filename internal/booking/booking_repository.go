@@ -21,16 +21,17 @@ func GetReservationRepository(db *pgxpool.Pool) *ReservationRepository {
 }
 
 // GetReservations returns all reservations ordered by creation date
-func (r *ReservationRepository) GetReservations() ([]Reservation, error) {
+func (r *ReservationRepository) GetReservations(organizationID int64) ([]Reservation, error) {
 	query := `
         SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
                total_price, payment_url, price_elements, no_of_guests, guest_data, additional_requests, 
                check_out_date, created_at, update_at
         FROM reservation
+        WHERE organization_id = $1
         ORDER BY created_at DESC
     `
 
-	rows, err := r.db.Query(context.Background(), query)
+	rows, err := r.db.Query(context.Background(), query, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func (r *ReservationRepository) GetReservations() ([]Reservation, error) {
 }
 
 // GetReservationByID returns a single reservation by ID
-func (r *ReservationRepository) GetReservationByID(id int) (*Reservation, error) {
+func (r *ReservationRepository) GetReservationByIDInternal(id int) (*Reservation, error) {
 	query := `
         SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
                total_price, payment_url, price_elements, no_of_guests, guest_data, additional_requests, 
@@ -55,6 +56,34 @@ func (r *ReservationRepository) GetReservationByID(id int) (*Reservation, error)
     `
 
 	rows, err := r.db.Query(context.Background(), query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	reservation, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Reservation])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &reservation, nil
+}
+
+// GetReservationByID returns a single reservation by ID
+func (r *ReservationRepository) GetReservationByID(id int, organizationID int64) (*Reservation, error) {
+	query := `
+        SELECT id, organization_id, property_id, customer_id, check_in_date, status, 
+               total_price, payment_url, price_elements, no_of_guests, guest_data, additional_requests, 
+               check_out_date, created_at, update_at
+        FROM reservation
+        WHERE id = $1
+        AND organization_id = $2
+    `
+
+	rows, err := r.db.Query(context.Background(), query, id, organizationID)
 	if err != nil {
 		return nil, err
 	}

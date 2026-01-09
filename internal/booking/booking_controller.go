@@ -21,6 +21,15 @@ func GetReservationController(service *ReservationService) *ReservationControlle
 	}
 }
 
+func (c *ReservationController) getOrgID(ctx *gin.Context) (int64, bool) {
+	val, exists := ctx.Get("organization_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Organization ID not found"})
+		return 0, false
+	}
+	return val.(int64), true
+}
+
 // GetReservationsHandler godoc
 // @Summary Get all reservations
 // @Description Returns a list of all reservations
@@ -32,7 +41,13 @@ func GetReservationController(service *ReservationService) *ReservationControlle
 // @Router /reservations [get]
 func (c *ReservationController) GetReservationsHandler(ctx *gin.Context) {
 	fmt.Println("booking_controller: GetReservationsHandler invoked")
-	reservations, err := c.service.GetReservations()
+
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
+	reservations, err := c.service.GetReservations(orgID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "Failed to fetch reservations",
@@ -85,6 +100,11 @@ func (route ReservationRoutes) ReadinessHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse
 // @Router /reservations/{id} [get]
 func (c *ReservationController) GetReservationByIDHandler(ctx *gin.Context) {
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	idStr := ctx.Param("id")
 
 	id, err := strconv.Atoi(idStr)
@@ -96,7 +116,7 @@ func (c *ReservationController) GetReservationByIDHandler(ctx *gin.Context) {
 		return
 	}
 
-	reservation, err := c.service.GetReservationByID(id)
+	reservation, err := c.service.GetReservationByID(id, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, ErrorResponse{
 			Error:   "Reservation not found",
@@ -121,6 +141,12 @@ func (c *ReservationController) GetReservationByIDHandler(ctx *gin.Context) {
 // @Router /reservations [post]
 func (c *ReservationController) CreateReservationHandler(ctx *gin.Context) {
 	var req ReservationRequest
+
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request body",
@@ -129,7 +155,7 @@ func (c *ReservationController) CreateReservationHandler(ctx *gin.Context) {
 		return
 	}
 
-	reservation, err := c.service.CreateReservation(&req)
+	reservation, err := c.service.CreateReservation(&req, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to create reservation",
@@ -157,6 +183,11 @@ func (c *ReservationController) CreateReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) UpdateReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
@@ -175,7 +206,7 @@ func (c *ReservationController) UpdateReservationHandler(ctx *gin.Context) {
 		return
 	}
 
-	reservation, err := c.service.UpdateReservation(id, &req)
+	reservation, err := c.service.UpdateReservation(id, &req, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to update reservation",
@@ -202,6 +233,11 @@ func (c *ReservationController) UpdateReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) DeleteReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
@@ -211,7 +247,7 @@ func (c *ReservationController) DeleteReservationHandler(ctx *gin.Context) {
 		return
 	}
 
-	err = c.service.DeleteReservation(id)
+	err = c.service.DeleteReservation(id, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to delete reservation",
@@ -238,6 +274,11 @@ func (c *ReservationController) DeleteReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) UpdateReservationStatusHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
@@ -256,7 +297,7 @@ func (c *ReservationController) UpdateReservationStatusHandler(ctx *gin.Context)
 		return
 	}
 
-	reservation, err := c.service.UpdateReservationStatus(id, req.Status)
+	reservation, err := c.service.UpdateReservationStatus(id, req.Status, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to update status",
@@ -282,6 +323,11 @@ func (c *ReservationController) UpdateReservationStatusHandler(ctx *gin.Context)
 func (c *ReservationController) CancelReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
@@ -291,7 +337,7 @@ func (c *ReservationController) CancelReservationHandler(ctx *gin.Context) {
 		return
 	}
 
-	reservation, err := c.service.CancelReservation(id)
+	reservation, err := c.service.CancelReservation(id, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to cancel reservation",
@@ -317,6 +363,11 @@ func (c *ReservationController) CancelReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) ConfirmReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
@@ -326,7 +377,7 @@ func (c *ReservationController) ConfirmReservationHandler(ctx *gin.Context) {
 		return
 	}
 
-	reservation, err := c.service.ConfirmReservation(id)
+	reservation, err := c.service.ConfirmReservation(id, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to confirm reservation",
@@ -352,6 +403,11 @@ func (c *ReservationController) ConfirmReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) CheckInReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
@@ -361,7 +417,7 @@ func (c *ReservationController) CheckInReservationHandler(ctx *gin.Context) {
 		return
 	}
 
-	reservation, err := c.service.CheckInReservation(id)
+	reservation, err := c.service.CheckInReservation(id, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to check-in reservation",
@@ -387,6 +443,11 @@ func (c *ReservationController) CheckInReservationHandler(ctx *gin.Context) {
 func (c *ReservationController) CheckOutReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
+	orgID, ok := c.getOrgID(ctx)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
@@ -396,7 +457,7 @@ func (c *ReservationController) CheckOutReservationHandler(ctx *gin.Context) {
 		return
 	}
 
-	reservation, err := c.service.CheckOutReservation(id)
+	reservation, err := c.service.CheckOutReservation(id, orgID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Failed to check-out reservation",

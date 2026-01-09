@@ -4,7 +4,7 @@
 // 	protoc        v3.20.3
 // source: customer.proto
 
-package customerpb
+package customer
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -22,13 +22,14 @@ const (
 )
 
 type Customer struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	FullName      string                 `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
-	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	FullName       string                 `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	Email          string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	CreatedAt      string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	OrganizationId int64                  `protobuf:"varint,5,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Customer) Reset() {
@@ -87,6 +88,13 @@ func (x *Customer) GetCreatedAt() string {
 		return x.CreatedAt
 	}
 	return ""
+}
+
+func (x *Customer) GetOrganizationId() int64 {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return 0
 }
 
 type GetCustomerRequest struct {
@@ -274,11 +282,12 @@ func (x *ListCustomersResponse) GetCustomers() []*Customer {
 }
 
 type CreateCustomerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FullName      string                 `protobuf:"bytes,1,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	FullName       string                 `protobuf:"bytes,1,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	Email          string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	OrganizationId int64                  `protobuf:"varint,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *CreateCustomerRequest) Reset() {
@@ -323,6 +332,13 @@ func (x *CreateCustomerRequest) GetEmail() string {
 		return x.Email
 	}
 	return ""
+}
+
+func (x *CreateCustomerRequest) GetOrganizationId() int64 {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return 0
 }
 
 type DeleteCustomerRequest struct {
@@ -417,13 +433,14 @@ var File_customer_proto protoreflect.FileDescriptor
 
 const file_customer_proto_rawDesc = "" +
 	"\n" +
-	"\x0ecustomer.proto\x12\bcustomer\"l\n" +
+	"\x0ecustomer.proto\x12\bcustomer\"\x95\x01\n" +
 	"\bCustomer\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\tR\tcreatedAt\"$\n" +
+	"created_at\x18\x04 \x01(\tR\tcreatedAt\x12'\n" +
+	"\x0forganization_id\x18\x05 \x01(\x03R\x0eorganizationId\"$\n" +
 	"\x12GetCustomerRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"B\n" +
 	"\x10CustomerResponse\x12.\n" +
@@ -432,10 +449,11 @@ const file_customer_proto_rawDesc = "" +
 	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\"I\n" +
 	"\x15ListCustomersResponse\x120\n" +
-	"\tcustomers\x18\x01 \x03(\v2\x12.customer.CustomerR\tcustomers\"J\n" +
+	"\tcustomers\x18\x01 \x03(\v2\x12.customer.CustomerR\tcustomers\"s\n" +
 	"\x15CreateCustomerRequest\x12\x1b\n" +
 	"\tfull_name\x18\x01 \x01(\tR\bfullName\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\"'\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12'\n" +
+	"\x0forganization_id\x18\x03 \x01(\x03R\x0eorganizationId\"'\n" +
 	"\x15DeleteCustomerRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"2\n" +
 	"\x16DeleteCustomerResponse\x12\x18\n" +
@@ -444,7 +462,7 @@ const file_customer_proto_rawDesc = "" +
 	"\vGetCustomer\x12\x1c.customer.GetCustomerRequest\x1a\x1a.customer.CustomerResponse\x12P\n" +
 	"\rListCustomers\x12\x1e.customer.ListCustomersRequest\x1a\x1f.customer.ListCustomersResponse\x12M\n" +
 	"\x0eCreateCustomer\x12\x1f.customer.CreateCustomerRequest\x1a\x1a.customer.CustomerResponse\x12S\n" +
-	"\x0eDeleteCustomer\x12\x1f.customer.DeleteCustomerRequest\x1a .customer.DeleteCustomerResponseb\x06proto3"
+	"\x0eDeleteCustomer\x12\x1f.customer.DeleteCustomerRequest\x1a .customer.DeleteCustomerResponseB\"Z hostflow/extra/customer;customerb\x06proto3"
 
 var (
 	file_customer_proto_rawDescOnce sync.Once

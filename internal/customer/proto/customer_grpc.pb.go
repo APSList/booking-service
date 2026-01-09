@@ -4,7 +4,7 @@
 // - protoc             v3.20.3
 // source: customer.proto
 
-package customerpb
+package customer
 
 import (
 	context "context"

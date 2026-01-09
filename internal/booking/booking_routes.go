@@ -2,6 +2,7 @@ package booking
 
 import (
 	"hostflow/booking-service/internal/customer"
+	"hostflow/booking-service/internal/middlewares"
 	"hostflow/booking-service/pkg/lib"
 
 	swaggerFiles "github.com/swaggo/files"
@@ -14,6 +15,7 @@ type ReservationRoutes struct {
 	router                *lib.Router
 	reservationController *ReservationController
 	customerController    *customer.CustomerController
+	authMiddleware        middlewares.AuthMiddleware
 }
 
 // SetReservationRoutes returns a ReservationRoutes struct
@@ -22,12 +24,14 @@ func SetReservationRoutes(
 	router *lib.Router,
 	reservationController *ReservationController,
 	customerController *customer.CustomerController,
+	authMiddleware middlewares.AuthMiddleware,
 ) ReservationRoutes {
 	return ReservationRoutes{
 		logger:                logger,
 		router:                router,
 		reservationController: reservationController,
 		customerController:    customerController,
+		authMiddleware:        authMiddleware,
 	}
 }
 
@@ -37,6 +41,7 @@ func (route ReservationRoutes) Setup() {
 
 	// Main reservations routes
 	reservations := route.router.Group("/reservations")
+	reservations.Use(route.authMiddleware.Handler())
 	{
 		reservations.GET("", route.reservationController.GetReservationsHandler)
 		reservations.POST("/", route.reservationController.CreateReservationHandler)
@@ -46,11 +51,12 @@ func (route ReservationRoutes) Setup() {
 	}
 
 	customers := route.router.Group("/customer")
+	customers.Use(route.authMiddleware.Handler())
 	{
 		customers.GET("", route.customerController.GetCustomerHandler)
 		customers.POST("/", route.customerController.CreateCustomerHandler)
 		customers.GET("/:id", route.customerController.GetCustomerByIDHandler)
-		customers.PUT("/:id", route.customerController.UpdateCustomerHandler)
+		//customers.PUT("/:id", route.customerController.UpdateCustomerHandler)
 		customers.DELETE("/:id", route.customerController.DeleteCustomerHandler)
 	}
 
