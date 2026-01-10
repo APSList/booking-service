@@ -3,6 +3,7 @@ package main
 import (
 	_ "hostflow/booking-service/docs" // Import generated swagger docs
 	"hostflow/booking-service/internal/bootstrap"
+	"hostflow/booking-service/internal/communication"
 	"hostflow/booking-service/internal/customer"
 	"hostflow/booking-service/internal/kafka"
 
@@ -45,5 +46,6 @@ func main() {
 		bootstrap.Module,
 		kafka.Module,
 		customer.Module,
+		communication.Module,
 	).Run()
 }

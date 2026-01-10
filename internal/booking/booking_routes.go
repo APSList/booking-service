@@ -1,6 +1,7 @@
 package booking
 
 import (
+	"hostflow/booking-service/internal/communication"
 	"hostflow/booking-service/internal/customer"
 	"hostflow/booking-service/internal/middlewares"
 	"hostflow/booking-service/pkg/lib"
@@ -11,11 +12,12 @@ import (
 
 // ReservationRoutes struct
 type ReservationRoutes struct {
-	logger                lib.Logger
-	router                *lib.Router
-	reservationController *ReservationController
-	customerController    *customer.CustomerController
-	authMiddleware        middlewares.AuthMiddleware
+	logger                  lib.Logger
+	router                  *lib.Router
+	reservationController   *ReservationController
+	customerController      *customer.CustomerController
+	communicationController *communication.CommunicationController
+	authMiddleware          middlewares.AuthMiddleware
 }
 
 // SetReservationRoutes returns a ReservationRoutes struct
@@ -25,13 +27,15 @@ func SetReservationRoutes(
 	reservationController *ReservationController,
 	customerController *customer.CustomerController,
 	authMiddleware middlewares.AuthMiddleware,
+	communicationController *communication.CommunicationController,
 ) ReservationRoutes {
 	return ReservationRoutes{
-		logger:                logger,
-		router:                router,
-		reservationController: reservationController,
-		customerController:    customerController,
-		authMiddleware:        authMiddleware,
+		logger:                  logger,
+		router:                  router,
+		reservationController:   reservationController,
+		customerController:      customerController,
+		authMiddleware:          authMiddleware,
+		communicationController: communicationController,
 	}
 }
 
@@ -58,6 +62,11 @@ func (route ReservationRoutes) Setup() {
 		customers.GET("/:id", route.customerController.GetCustomerByIDHandler)
 		//customers.PUT("/:id", route.customerController.UpdateCustomerHandler)
 		customers.DELETE("/:id", route.customerController.DeleteCustomerHandler)
+	}
+
+	communications := route.router.Group("/communication")
+	{
+		communications.POST("/email", route.communicationController.SendEmailHandler)
 	}
 
 	health := route.router.Group("/health")
