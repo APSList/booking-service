@@ -32,10 +32,11 @@ func (c *ReservationController) getOrgID(ctx *gin.Context) (int64, bool) {
 
 // GetReservationsHandler godoc
 // @Summary Get all reservations
-// @Description Returns a list of all reservations
+// @Description Returns a list of all reservations for the authenticated organization
 // @Tags reservations
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Success 200 {array} ReservationResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /reservations [get]
@@ -65,6 +66,13 @@ func (c *ReservationController) GetReservationsHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+// LivenessHandler godoc
+// @Summary Liveness probe
+// @Description Check if the service process is alive
+// @Tags health
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /health/liveness [get]
 func (route ReservationRoutes) LivenessHandler(c *gin.Context) {
 	// If this handler runs, the process is alive
 	c.JSON(200, gin.H{
@@ -72,6 +80,13 @@ func (route ReservationRoutes) LivenessHandler(c *gin.Context) {
 	})
 }
 
+// ReadinessHandler godoc
+// @Summary Readiness probe
+// @Description Check if the service is ready to handle requests
+// @Tags health
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /health/readiness [get]
 func (route ReservationRoutes) ReadinessHandler(c *gin.Context) {
 	// Put real readiness checks here if you have them
 	// e.g. database ping, message broker connection, etc.
@@ -89,15 +104,14 @@ func (route ReservationRoutes) ReadinessHandler(c *gin.Context) {
 
 // GetReservationByIDHandler godoc
 // @Summary Get reservation by ID
-// @Description Get reservation details by reservation ID
+// @Description Get reservation details by its integer ID
 // @Tags reservations
 // @Accept json
 // @Produce json
-// @Param id path string true "Reservation ID (UUID)"
+// @Param id path int true "Reservation ID"
 // @Success 200 {object} ReservationResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
 // @Router /reservations/{id} [get]
 func (c *ReservationController) GetReservationByIDHandler(ctx *gin.Context) {
 	orgID, ok := c.getOrgID(ctx)
@@ -169,16 +183,14 @@ func (c *ReservationController) CreateReservationHandler(ctx *gin.Context) {
 
 // UpdateReservationHandler godoc
 // @Summary Update a reservation
-// @Description Update reservation details by reservation ID
+// @Description Update reservation details by integer ID
 // @Tags reservations
 // @Accept json
 // @Produce json
-// @Param id path string true "Reservation ID (UUID)"
+// @Param id path int true "Reservation ID"
 // @Param reservation body ReservationRequest true "Updated reservation details"
 // @Success 200 {object} ReservationResponse
 // @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
 // @Router /reservations/{id} [put]
 func (c *ReservationController) UpdateReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
@@ -220,15 +232,9 @@ func (c *ReservationController) UpdateReservationHandler(ctx *gin.Context) {
 
 // DeleteReservationHandler godoc
 // @Summary Delete a reservation
-// @Description Delete reservation by reservation ID
 // @Tags reservations
-// @Accept json
-// @Produce json
-// @Param id path string true "Reservation ID (UUID)"
+// @Param id path int true "Reservation ID"
 // @Success 204 "No Content"
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
 // @Router /reservations/{id} [delete]
 func (c *ReservationController) DeleteReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
@@ -311,14 +317,9 @@ func (c *ReservationController) UpdateReservationStatusHandler(ctx *gin.Context)
 
 // CancelReservationHandler godoc
 // @Summary Cancel a reservation
-// @Description Cancel a reservation by ID
 // @Tags reservations
-// @Accept json
-// @Produce json
-// @Param id path string true "Reservation ID (UUID)"
+// @Param id path int true "Reservation ID"
 // @Success 200 {object} ReservationResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
 // @Router /reservations/{id}/cancel [post]
 func (c *ReservationController) CancelReservationHandler(ctx *gin.Context) {
 	idStr := ctx.Param("id")
@@ -349,7 +350,7 @@ func (c *ReservationController) CancelReservationHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, reservation.ToResponse())
 }
 
-// ConfirmReservationHandler godoc
+/*// ConfirmReservationHandler godoc
 // @Summary Confirm a reservation
 // @Description Confirm a pending reservation by ID
 // @Tags reservations
@@ -387,9 +388,9 @@ func (c *ReservationController) ConfirmReservationHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, reservation.ToResponse())
-}
+}*/
 
-// CheckInReservationHandler godoc
+/*// CheckInReservationHandler godoc
 // @Summary Check-in a reservation
 // @Description Mark a reservation as checked in
 // @Tags reservations
@@ -467,4 +468,4 @@ func (c *ReservationController) CheckOutReservationHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, reservation.ToResponse())
-}
+}*/

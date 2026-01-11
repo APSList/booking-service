@@ -151,7 +151,7 @@ func (s *ReservationService) UpdateReservation(id int, req *ReservationRequest, 
 	}
 
 	// Check if reservation can be updated
-	if existingReservation.Status == "completed" || existingReservation.Status == "cancelled" {
+	if existingReservation.Status == "COMPLETED" || existingReservation.Status == "CANCELLED" {
 		return nil, errors.New("cannot update a completed or cancelled reservation")
 	}
 
@@ -170,6 +170,7 @@ func (s *ReservationService) UpdateReservation(id int, req *ReservationRequest, 
 	existingReservation.CustomerID = req.CustomerID
 	existingReservation.CheckInDate = req.CheckInDate
 	existingReservation.CheckOutDate = req.CheckOutDate
+	existingReservation.Status = req.Status
 	existingReservation.TotalPrice = req.TotalPrice
 	existingReservation.PriceElements = req.PriceElements
 	existingReservation.NoOfGuests = req.NoOfGuests

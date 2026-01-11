@@ -24,9 +24,215 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/customers": {
+            "get": {
+                "description": "Returns a list of customers filtered by organization ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Get all customers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pagination limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Pagination offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/customer.Customer"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Registers a new customer within the organization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Create a new customer",
+                "parameters": [
+                    {
+                        "description": "Customer details",
+                        "name": "customer",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "full_name": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/customer.Customer"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/{id}": {
+            "get": {
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Get customer by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Customer ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/customer.Customer"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Delete a customer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Customer ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health/liveness": {
+            "get": {
+                "description": "Check if the service process is alive",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Liveness probe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health/readiness": {
+            "get": {
+                "description": "Check if the service is ready to handle requests",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Readiness probe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/reservations": {
             "get": {
-                "description": "Returns a list of all reservations",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns a list of all reservations for the authenticated organization",
                 "consumes": [
                     "application/json"
                 ],
@@ -102,7 +308,7 @@ const docTemplate = `{
         },
         "/reservations/{id}": {
             "get": {
-                "description": "Get reservation details by reservation ID",
+                "description": "Get reservation details by its integer ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -115,8 +321,8 @@ const docTemplate = `{
                 "summary": "Get reservation by ID",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Reservation ID (UUID)",
+                        "type": "integer",
+                        "description": "Reservation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -140,17 +346,11 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/booking.ErrorResponse"
                         }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
                     }
                 }
             },
             "put": {
-                "description": "Update reservation details by reservation ID",
+                "description": "Update reservation details by integer ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -163,8 +363,8 @@ const docTemplate = `{
                 "summary": "Update a reservation",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Reservation ID (UUID)",
+                        "type": "integer",
+                        "description": "Reservation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -191,37 +391,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/booking.ErrorResponse"
                         }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
                     }
                 }
             },
             "delete": {
-                "description": "Delete reservation by reservation ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "reservations"
                 ],
                 "summary": "Delete a reservation",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Reservation ID (UUID)",
+                        "type": "integer",
+                        "description": "Reservation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -230,45 +411,20 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
                     }
                 }
             }
         },
         "/reservations/{id}/cancel": {
             "post": {
-                "description": "Cancel a reservation by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "reservations"
                 ],
                 "summary": "Cancel a reservation",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Reservation ID (UUID)",
+                        "type": "integer",
+                        "description": "Reservation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -279,150 +435,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/booking.ReservationResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/reservations/{id}/checkin": {
-            "post": {
-                "description": "Mark a reservation as checked in",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "reservations"
-                ],
-                "summary": "Check-in a reservation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Reservation ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ReservationResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/reservations/{id}/checkout": {
-            "post": {
-                "description": "Mark a reservation as checked out",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "reservations"
-                ],
-                "summary": "Check-out a reservation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Reservation ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ReservationResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/reservations/{id}/confirm": {
-            "post": {
-                "description": "Confirm a pending reservation by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "reservations"
-                ],
-                "summary": "Confirm a reservation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Reservation ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ReservationResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/booking.ErrorResponse"
                         }
                     }
                 }
@@ -521,8 +533,8 @@ const docTemplate = `{
                     "example": "2024-12-25T11:00:00Z"
                 },
                 "customer_id": {
-                    "type": "string",
-                    "example": "770e8400-e29b-41d4-a716-446655440000"
+                    "type": "integer",
+                    "example": 100
                 },
                 "guest_data": {
                     "type": "object",
@@ -534,16 +546,20 @@ const docTemplate = `{
                     "example": 2
                 },
                 "organization_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                    "type": "integer",
+                    "example": 1
                 },
                 "price_elements": {
                     "type": "object",
                     "additionalProperties": true
                 },
                 "property_id": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "status": {
                     "type": "string",
-                    "example": "660e8400-e29b-41d4-a716-446655440000"
+                    "example": "CREATED"
                 },
                 "total_price": {
                     "type": "number",
@@ -572,45 +588,39 @@ const docTemplate = `{
                     "example": "2024-12-01T09:00:00Z"
                 },
                 "customer_id": {
-                    "type": "string",
-                    "example": "770e8400-e29b-41d4-a716-446655440000"
+                    "type": "integer",
+                    "example": 100
                 },
                 "guest_data": {
                     "type": "object",
                     "additionalProperties": true
                 },
                 "id": {
-                    "type": "string",
-                    "example": "880e8400-e29b-41d4-a716-446655440000"
+                    "type": "integer",
+                    "example": 1
                 },
                 "no_of_guests": {
                     "type": "integer",
                     "example": 2
                 },
                 "organization_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                    "type": "integer",
+                    "example": 1
                 },
                 "price_elements": {
                     "type": "object",
                     "additionalProperties": true
                 },
                 "property_id": {
-                    "type": "string",
-                    "example": "660e8400-e29b-41d4-a716-446655440000"
+                    "type": "integer",
+                    "example": 10
                 },
                 "status": {
                     "type": "string",
                     "enum": [
-                        "pending",
-                        "confirmed",
-                        "checked_in",
-                        "checked_out",
-                        "cancelled",
-                        "completed",
-                        "rejected"
+                        "CREATED CONFIRMED PAYMENT_REQUIRED REJECTED CANCELLED COMPLETED"
                     ],
-                    "example": "confirmed"
+                    "example": "CREATED"
                 },
                 "total_price": {
                     "type": "number",
@@ -631,17 +641,43 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "enum": [
-                        "pending",
-                        "confirmed",
-                        "checked_in",
-                        "checked_out",
-                        "cancelled",
-                        "completed",
-                        "rejected"
+                        "CREATED",
+                        "CONFIRMED",
+                        "PAYMENT_REQUIRED",
+                        "REJECTED",
+                        "CANCELLED",
+                        "COMPLETED"
                     ],
-                    "example": "confirmed"
+                    "example": "CONFIRMED"
                 }
             }
+        },
+        "customer.Customer": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "organization_id": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     },
     "tags": [
@@ -652,14 +688,6 @@ const docTemplate = `{
         {
             "description": "Customer-specific reservation operations",
             "name": "customers"
-        },
-        {
-            "description": "Property-specific reservation operations",
-            "name": "properties"
-        },
-        {
-            "description": "Organization-specific reservation operations",
-            "name": "organizations"
         }
     ]
 }`

@@ -20,7 +20,16 @@ func NewController(client pb.CustomerServiceClient) *CustomerController {
 	return &CustomerController{client: client}
 }
 
-// GetCustomerHandler returns a list of customers (ListCustomers RPC)
+// GetCustomerHandler godoc
+// @Summary Get all customers
+// @Description Returns a list of customers filtered by organization ID
+// @Tags customers
+// @Produce json
+// @Param limit query int false "Pagination limit"
+// @Param offset query int false "Pagination offset"
+// @Success 200 {array} pb.Customer
+// @Failure 401 {object} map[string]string
+// @Router /customers [get]
 func (c *CustomerController) GetCustomerHandler(ctx *gin.Context) {
 	val, exists := ctx.Get("organization_id")
 
@@ -61,7 +70,16 @@ func (c *CustomerController) GetCustomerHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, filteredCustomers)
 }
 
-// CreateCustomerHandler calls CreateCustomer RPC
+// CreateCustomerHandler godoc
+// @Summary Create a new customer
+// @Description Registers a new customer within the organization
+// @Tags customers
+// @Accept json
+// @Produce json
+// @Param customer body object{full_name=string,email=string} true "Customer details"
+// @Success 201 {object} pb.Customer
+// @Failure 400 {object} map[string]string
+// @Router /customers [post]
 func (c *CustomerController) CreateCustomerHandler(ctx *gin.Context) {
 	var req struct {
 		FullName       string `json:"full_name"`
@@ -92,7 +110,13 @@ func (c *CustomerController) CreateCustomerHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, resp.Customer)
 }
 
-// GetCustomerByIDHandler calls GetCustomer RPC
+// GetCustomerByIDHandler godoc
+// @Summary Get customer by ID
+// @Tags customers
+// @Param id path int true "Customer ID"
+// @Success 200 {object} pb.Customer
+// @Failure 404 {object} map[string]string
+// @Router /customers/{id} [get]
 func (c *CustomerController) GetCustomerByIDHandler(ctx *gin.Context) {
 	orgID, ok := c.getOrgID(ctx)
 	if !ok {
@@ -141,7 +165,12 @@ func (c *CustomerController) UpdateCustomerHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusNotImplemented, gin.H{"error": "UpdateCustomer RPC not implemented in proto"})
 }*/
 
-// DeleteCustomerHandler
+// DeleteCustomerHandler godoc
+// @Summary Delete a customer
+// @Tags customers
+// @Param id path int true "Customer ID"
+// @Success 200 {object} map[string]bool
+// @Router /customers/{id} [delete]
 func (c *CustomerController) DeleteCustomerHandler(ctx *gin.Context) {
 	orgID, ok := c.getOrgID(ctx)
 	if !ok {

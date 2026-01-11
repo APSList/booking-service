@@ -23,21 +23,19 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host hostflow.software
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
+// @host hostflow.software/booking
 // @BasePath /
-// @schemes http https
+// @schemes https
 
 // @tag.name reservations
 // @tag.description Operations related to reservations
 
 // @tag.name customers
 // @tag.description Customer-specific reservation operations
-
-// @tag.name properties
-// @tag.description Property-specific reservation operations
-
-// @tag.name organizations
-// @tag.description Organization-specific reservation operations
 
 func main() {
 	_ = godotenv.Load()
