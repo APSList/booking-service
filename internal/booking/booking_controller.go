@@ -11,11 +11,11 @@ import (
 
 // ReservationController handles HTTP requests for reservations
 type ReservationController struct {
-	service *ReservationService
+	service Service
 }
 
 // GetReservationController creates a new controller
-func GetReservationController(service *ReservationService) *ReservationController {
+func GetReservationController(service Service) *ReservationController {
 	return &ReservationController{
 		service: service,
 	}

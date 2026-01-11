@@ -16,6 +16,17 @@ type ReservationService struct {
 	repo *ReservationRepository
 }
 
+type Service interface {
+	GetReservations(orgID int64) ([]Reservation, error)
+	GetReservationByID(id int, orgID int64) (*Reservation, error)
+	CreateReservation(req *ReservationRequest, orgID int64) (*Reservation, error)
+	UpdateReservation(id int, req *ReservationRequest, orgID int64) (*Reservation, error)
+	DeleteReservation(id int, orgID int64) error
+	UpdateReservationStatus(id int, status string, orgID int64) (*Reservation, error)
+	CancelReservation(id int, orgID int64) (*Reservation, error)
+	ConfirmPayment(reservationID int) error
+}
+
 // GetReservationService creates a new ReservationService
 func GetReservationService(repo *ReservationRepository) *ReservationService {
 	return &ReservationService{
@@ -302,7 +313,7 @@ func (s *ReservationService) ConfirmReservation(id int, organizationID int64) (*
 	return s.UpdateReservationStatus(id, "CONFIRMED", organizationID)
 }
 
-// CheckInReservation marks a reservation as checked in
+/*// CheckInReservation marks a reservation as checked in
 func (s *ReservationService) CheckInReservation(id int, organizationID int64) (*Reservation, error) {
 	return s.UpdateReservationStatus(id, "checked_in", organizationID)
 }
@@ -310,7 +321,7 @@ func (s *ReservationService) CheckInReservation(id int, organizationID int64) (*
 // CheckOutReservation marks a reservation as checked out
 func (s *ReservationService) CheckOutReservation(id int, organizationID int64) (*Reservation, error) {
 	return s.UpdateReservationStatus(id, "checked_out", organizationID)
-}
+}*/
 
 // GetReservationsByCustomer returns all reservations for a customer
 func (s *ReservationService) GetReservationsByCustomer(customerID int) ([]Reservation, error) {

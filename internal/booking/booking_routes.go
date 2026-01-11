@@ -6,6 +6,8 @@ import (
 	"hostflow/booking-service/internal/middlewares"
 	"hostflow/booking-service/pkg/lib"
 
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -67,6 +69,11 @@ func (route ReservationRoutes) Setup() {
 	communications := route.router.Group("/communication")
 	{
 		communications.POST("/email", route.communicationController.SendEmailHandler)
+	}
+
+	metrics := route.router.Group("/metrics")
+	{
+		metrics.GET("", gin.WrapH(promhttp.Handler()))
 	}
 
 	health := route.router.Group("/health")

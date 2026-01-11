@@ -40,7 +40,7 @@ func NewKafkaReader() *kafka.Reader {
 	})
 }
 
-func RegisterKafkaHooks(lifecycle fx.Lifecycle, reader *kafka.Reader, reservationService *booking.ReservationService) {
+func RegisterKafkaHooks(lifecycle fx.Lifecycle, reader *kafka.Reader, reservationService booking.Service) {
 	lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			fmt.Println("Kafka Consumer starting...")
